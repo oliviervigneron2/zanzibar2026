@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width,initial-scale=1" name="viewport"/>
+  <title>Zanzibar • Avril 2026 • 10 jours</title>
+
+  <!-- FAVICON (mets favicon.png à la racine du repo) -->
+  <link rel="icon" type="image/png" href="favicon.png?v=1">
+
+  <!-- Leaflet -->
+  <link href="https://unpkg.com" rel="preconnect"/>
+  <link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet"/>
+
+  <style>
+    :root{
+      --bg0:#050b16;
+      --bg1:#071a2b;
+      --card:rgba(255,255,255,.06);
+      --card2:rgba(255,255,255,.08);
+      --stroke:rgba(255,255,255,.14);
+      --txt:#eaf7ff;
+      --muted:rgba(234,247,255,.72);
+
+      /* Zanzibar turquoise */
+      --accent:#00c2d1;
+      --accent2:#00ffd5;
+
+      --shadow: 0 16px 50px rgba(0,0,0,.45);
+      --r:18px;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      color:var(--txt);
+      background:
+        radial-gradient(1200px 600px at 20% -10%, rgba(0,194,209,.22), transparent 60%),
+        radial-gradient(1000px 600px at 90% 10%, rgba(0,255,213,.14), transparent 55%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .container{max-width:1100px;margin:0 auto;padding:22px}
+    .header{
+      background:linear-gradient(135deg, rgba(0,194,209,.18), rgba(0,255,213,.10));
+      border:1px solid var(--stroke);
+      border-radius:calc(var(--r) + 10px);
+      padding:18px 18px 14px;
+      box-shadow:var(--shadow);
+    }
+
+    .h1{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+    .badge{
+      display:inline-flex;align-items:center;gap:10px;
+      padding:10px 12px;border-radius:999px;
+      background:rgba(0,0,0,.22);border:1px solid var(--stroke);
+    }
+    .badge b{letter-spacing:.3px}
+    .sub{color:var(--muted);margin-top:8px;line-height:1.5}
+
+    .grid{display:grid;gap:14px}
+    .grid2{grid-template-columns:repeat(2, minmax(0,1fr))}
+    @media (max-width:880px){.grid2{grid-template-columns:1fr}}
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--stroke);
+      border-radius:var(--r);
+      box-shadow: 0 12px 36px rgba(0,0,0,.35);
+      overflow:hidden;
+      padding: 22px 22px 22px 22px;
+      margin: 0 0 18px 0;
+    }
+    .card:last-child{margin-bottom:0}
+
+    .kicker{color:var(--muted);font-size:13px;letter-spacing:.25px}
+    .title{font-size:18px;font-weight:800;margin:6px 0 0}
+    .p{color:var(--muted);margin:10px 0 0;line-height:1.6}
+
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}
+    .pill{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:8px 10px;border-radius:999px;
+      background:rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.10);
+      color:rgba(234,247,255,.85);
+      font-size:13px;
+      white-space:nowrap;
+    }
+    .pill a{color:inherit;text-decoration:none}
+    .pill:hover{border-color:rgba(0,255,213,.35)}
+    .pill strong{color:var(--txt)}
+
+    .photos{
+      display:grid;gap:12px;
+      grid-template-columns:repeat(2, minmax(0,1fr));
+      margin-top:14px;
+    }
+    @media (max-width:700px){.photos{grid-template-columns:1fr}}
+
+    .photo{
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.12);
+      overflow:hidden;
+      background:rgba(0,0,0,.25);
+    }
+    .photo img{
+      width:100%;
+      height:220px;           /* mêmes dimensions */
+      object-fit:cover;       /* recadrage propre */
+      display:block;
+    }
+    .photo .cap{
+      padding:10px 10px 11px;
+      color:rgba(234,247,255,.80);
+      font-size:13px;
+      border-top:1px solid rgba(255,255,255,.10);
+    }
+
+    /* Map card (mobile friendly) */
+    .mapWrap{display:flex;justify-content:center;margin-top:10px;margin-bottom:6px;}
+    .mapCard{
+      width:min(560px, 92vw);
+      aspect-ratio: 9 / 16;
+      max-height: 650px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 28px;
+      padding: 16px;
+      box-shadow: 0 18px 50px rgba(0,0,0,.35);
+    }
+    #map{
+      width:100%;
+      height:100%;
+      border-radius: 22px;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.14);
+    }
+
+    .mapTitleBlock{padding:14px 12px 10px 12px}
+    .mapTitleBlock .kicker{font-size:14px;color:rgba(255,255,255,.72);display:flex;gap:8px;align-items:center;margin-bottom:6px}
+    .mapTitleBlock .mapMainTitle{font-size:26px;font-weight:900;letter-spacing:.2px;margin-bottom:10px}
+    @media (max-width:520px){.mapTitleBlock .mapMainTitle{font-size:22px}}
+
+    .mapLegend{display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:6px}
+    .legItem{
+      display:inline-flex; gap:8px; align-items:center;
+      font-size:14px; color:rgba(255,255,255,.80);
+      padding:6px 10px; border-radius:999px;
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10)
+    }
+    .dot{width:10px; height:10px; border-radius:999px; display:inline-block; box-shadow:0 0 0 2px rgba(255,255,255,.25) inset}
+    .dotBlue{background:#2f7cff}     /* Jours */
+    .dotGreen{background:#2ecc71}    /* Best Of */
+    .dotYellow{background:#f1c40f}   /* Annexes */
+    .dotPurple{background:#8b5cf6}   /* Soirée */
+    .dotRed{background:#ff4d4d}      /* Arrivée/Aéroport */
+
+    /* Numbered markers */
+    .dot-marker{
+      width:22px;height:22px;border-radius:999px;
+      border:2px solid rgba(255,255,255,.9);
+      box-shadow:0 8px 22px rgba(0,0,0,.45);
+      display:flex;align-items:center;justify-content:center;
+      font-weight:900;font-size:11px;
+      color:#061022;
+    }
+    .m-blue{ background:#2f7cff; }
+    .m-green{ background:#2ecc71; }
+    .m-yellow{ background:#f1c40f; }
+    .m-purple{ background:#8b5cf6; color:#0a0a0a; }
+    .m-red{ background:#ff4d4d; }
+
+    .footer{margin:18px 0 6px;color:rgba(234,247,255,.55);font-size:11px;text-align:center}
+
+    .note{
+      margin-top:12px;
+      padding:12px 12px;border-radius:14px;
+      background:rgba(0,0,0,.22);
+      border:1px solid rgba(255,255,255,.12);
+      color:rgba(234,247,255,.82);
+      line-height:1.55;
+    }
+    .note b{color:var(--txt)}
+    .small{font-size:12.5px;color:rgba(234,247,255,.70);margin-top:10px;line-height:1.6}
+
+    .split{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+    @media (max-width:820px){.split{grid-template-columns:1fr}}
+    .box{
+      border:1px solid var(--stroke);
+      background:rgba(255,255,255,.05);
+      border-radius:14px;
+      padding:14px;
+    }
+    .box .row2{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+    .box .name{font-weight:900}
+    .box .time{
+      font-size:11px;color:rgba(234,247,255,.85);
+      padding:6px 10px;border:1px solid var(--stroke);
+      border-radius:999px;background:rgba(255,255,255,.04);
+      white-space:nowrap
+    }
+    .box .desc{margin-top:8px;color:rgba(234,247,255,.72);font-size:13px;line-height:1.5}
+  </style>
+</head>
+
+<body>
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="h1">
+      <div class="badge">🌴 <b>Zanzibar • 10 jours</b></div>
+      <div class="badge">🗓️ <b>Avril 2026</b></div>
+      <div class="badge">👨‍👩‍👧‍👦 <b>Famille</b></div>
+    </div>
+    <div class="sub">
+      Guide premium (dark mode) + carte interactive. Objectif : choisir ensemble les spots, organiser les journées, et partager facilement le lien.
+    </div>
+    <div class="note">
+      <b>Photos :</b> mets tes images en local dans <b>images/</b> et remplace les fichiers (ex: <i>images/j01_1.jpg</i>).
+      <div class="small">Astuce : garde toujours le même format (ex: 1600×1000) pour un rendu parfait.</div>
+    </div>
+  </div>
+
+  <!-- CARTE -->
+  <div class="card" id="mapSection" style="margin-top:14px">
+    <div class="mapTitleBlock">
+      <div class="kicker">🗺️ Carte interactive</div>
+      <div class="mapMainTitle">Zanzibar — Spots & catégories</div>
+      <div class="mapLegend">
+        <span class="legItem"><span class="dot dotRed"></span> Arrivée</span>
+        <span class="legItem"><span class="dot dotBlue"></span> Jours</span>
+        <span class="legItem"><span class="dot dotGreen"></span> Best Of</span>
+        <span class="legItem"><span class="dot dotYellow"></span> Annexes</span>
+        <span class="legItem"><span class="dot dotPurple"></span> Soirée</span>
+      </div>
+      <div class="small">Clique un spot → liens rapides (Google / Waze). Recherche automatique “+ Zanzibar Tanzania”.</div>
+    </div>
+
+    <div class="mapWrap">
+      <div class="mapCard">
+        <div id="map"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRAJETS / INFOS PRATIQUES -->
+  <div class="card" id="trajets">
+    <div class="kicker">🚗 Trajets & repères</div>
+    <div class="title">Transferts + fourchettes (à affiner)</div>
+    <div class="p">
+      Zanzibar fonctionne surtout en <b>taxi</b> / <b>chauffeur</b>. Les prix varient selon saison, négociation et heure.
+      <br><br>
+      <b>Repères rapides (ordre d’idée)</b> :
+      <ul style="margin:10px 0 0; color:rgba(234,247,255,.72); line-height:1.6">
+        <li><b>Aéroport (ZNZ) → Stone Town</b> : ~ 10–20 min • ~ <b>15–30€</b></li>
+        <li><b>Stone Town → Nungwi/Kendwa</b> : ~ 60–90 min • ~ <b>40–70€</b></li>
+        <li><b>Nungwi/Kendwa → Paje/Jambiani</b> : ~ 75–110 min • ~ <b>45–80€</b></li>
+        <li><b>Paje/Jambiani → Stone Town/ZNZ</b> : ~ 50–80 min • ~ <b>35–65€</b></li>
+      </ul>
+    </div>
+    <div class="small">⚠️ Ce sont des fourchettes “pratiques” pour le planning. On pourra les ajuster avec les vrais prix quand tu veux.</div>
+
+    <div class="split">
+      <div class="box">
+        <div class="row2">
+          <div class="name">🧭 Logement conseillé (équilibré)</div>
+          <div class="time">2 + 4 + 4 nuits</div>
+        </div>
+        <div class="desc">
+          <b>Stone Town (2 nuits)</b> → culture/visites •
+          <b>Nungwi/Kendwa (4 nuits)</b> → plages sans trop d’effet marée •
+          <b>Paje/Jambiani (4 nuits)</b> → lagons, bancs de sable, ambiance plus “nature”.
+        </div>
+      </div>
+      <div class="box">
+        <div class="row2">
+          <div class="name">✅ Activités “ados-friendly”</div>
+          <div class="time">Top 6</div>
+        </div>
+        <div class="desc">
+          Snorkeling (Mnemba) • Sunset dhow • Plages Kendwa • Jozani (singes) • Prison Island (tortues) • Bancs de sable / lagon Paje.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JOURS (10 jours) -->
+  <div class="card">
+    <div class="kicker">🗓️ Programme — 10 jours</div>
+    <div class="title">Jour 1 — Arrivée + Stone Town (soft)</div>
+    <div class="p">Check-in, balade simple, premier coucher de soleil (rooftop). Dîner tranquille.</div>
+    <div class="row">
+      <span class="pill"><strong>📍</strong> Stone Town</span>
+      <span class="pill"><a href="https://waze.com/ul?ll=-6.1659%2C39.2026&navigate=yes" target="_blank" rel="noopener">🧭 Ouvrir Waze</a></span>
+      <span class="pill"><a href="https://www.google.com/search?q=Stone+Town+Zanzibar+Tanzania" target="_blank" rel="noopener">🔎 Google</a></span>
+    </div>
+    <div class="photos">
+      <div class="photo"><img src="images/j01_1.jpg" alt="J1 photo 1"><div class="cap">Photo 1 (à remplacer) — Stone Town vibes</div></div>
+      <div class="photo"><img src="images/j01_2.jpg" alt="J1 photo 2"><div class="cap">Photo 2 (à remplacer) — Sunset rooftop</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="kicker">🗓️ Jour 2</div>
+    <div class="title">Stone Town + Prison Island (tortues)</div>
+    <div class="p">Ruelles, marché, portes sculptées. Excursion Prison Island pour les tortues + baignade si ok.</div>
+    <div class="row">
+      <span class="pill"><strong>📍</strong> Prison Island</span>
+      <span class="pill"><a href="https://waze.com/ul?ll=-6.1328%2C39.1765&navigate=yes" target="_blank" rel="noopener">🧭 Waze</a></span>
+      <span class="pill"><a href="https://www.google.com/search?q=Prison+Island+Zanzibar+Tanzania" target="_blank" rel="noopener">🔎 Google</a></span>
+    </div>
+    <div class="photos">
+      <div class="photo"><img src="images/j02_1.jpg" alt="J2 photo 1"><div class="cap">Photo 1 (à remplacer) — Stone Town</div></div>
+      <div class="photo"><img src="images/j02_2.jpg" alt="J2 photo 2"><div class="cap">Photo 2 (à remplacer) — Tortues</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="kicker">🗓️ Jour 3</div>
+    <div class="title">Transfert Nord — Nungwi / Kendwa + plage</div>
+    <div class="p">Installation au nord. Plage + chill (Kendwa est top pour le sunset).</div>
+    <div class="row">
+      <span class="pill"><strong>📍</strong> Kendwa Beach</span>
+      <span class="pill"><a href="https://waze.com/ul?ll=-5.7580%2C39.2880&navigate=yes" target="_blank" rel="noopener">🧭 Waze</a></span>
+      <span class="pill"><a href="https://www.google.com/search?q=Kendwa+Beach+Zanzibar+Tanzania" target="_blank" rel="noopener">🔎 Google</a></span>
+    </div>
+    <div class="photos">
+      <div class="photo"><img src="images/j03_1.jpg" alt="J3 photo 1"><div class="cap">Photo 1 (à remplacer) — Arrivée nord</div></div>
+      <div class="photo"><img src="images/j03_2.jpg" alt="J3 photo 2"><div class="cap">Photo 2 (à remplacer) — Sunset Kendwa</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="kicker">🗓️ Jour 4</div>
+    <div class="title">Mnemba (snorkeling) ou journée plage</div>
+    <div class="p">Option bateau snorkeling (souvent dauphins/snorkel selon conditions) ou full plage.</div>
+    <div class="row">
+      <span class="pill"><strong>📍</strong> Mnemba (zone)</span>
+      <span class="pill"><a href="https://www.google.com/search?q=Mnemba+Island+snorkeling+Zanzibar+Tanzania" target="_blank" rel="noopener">🔎 Google</a></span>
+    </div>
+    <div class="photos">
+      <div class="photo"><img src="images/j04_1.jpg" alt="J4 photo 1"><div class="cap">Photo 1 (à remplacer) — Snorkeling</div></div>
+      <div class="photo"><img src="images/j04_2.jpg" alt="J4 photo 2"><div class="cap">Photo 2 (à remplacer) — Plage nord</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="kicker">🗓️ Jour 5</div>
+    <div class="title">Nungwi — village + plage + sunset dhow (option)</div>
+    <div class="p">Balade, photos, et option bateau traditionnel (dhow) au coucher du soleil.</div>
+    <div class="photos">
+      <div class="photo"><img src="images/j05_1.jpg" alt="J5 photo 1"><div class="cap">Photo 1 (à remplacer) — Nungwi</div></div>
+      <div class="photo"><img src="images/j05_2.jpg" alt="J5 photo 2"><div class="cap">Photo 2 (à remplacer) — Dhow sunset</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="kicker">🗓️ Jour 6</div>
+    <div class="title">Journée libre Nord (repos / beach club)</div>
+    <div class="p">Journée “respiration” : plage, piscine, activités au choix.</div>
+    <div class="photos">
+      <div class="photo"><img src="images/j06_1.jpg" alt="J6 photo 1"><div class="cap">Photo 1 (à remplacer) — Chill</div></div>
+      <div class="photo"><img src="images/j06_2.jpg" alt="J6 photo 2"><div class="cap">Photo 2 (à remplacer) — Beach vibes</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="kicker">🗓️ Jour 7</div>
+    <div class="title">Transfert Est — Paje / Jambiani + lagon</div>
+    <div class="p">Changement d’ambiance : grands espaces, lagon, bancs de sable selon marées.</div>
+    <div class="row">
+      <span class="pill"><strong>📍</strong> Paje</span>
+      <span class="pill"><a href="https://waze.com/ul?ll=-6.2666%2C39.5342&navigate=yes" target="_blank" rel="noopener">🧭 Waze</a></span>
+      <span class="pill"><a href="https://www.google.com/search?q=Paje+Zanzibar+Tanzania" target="_blank" rel="noopener">🔎 Google</a></span>
+    </div>
+    <div class="photos">
+      <div class="photo"><img src="images/j07_1.jpg" alt="J7 photo 1"><div class="cap">Photo 1 (à remplacer) — Lagon Paje</div></div>
+      <div class="photo"><img src="images/j07_2.jpg" alt="J7 photo 2"><div class="cap">Photo 2 (à remplacer) — Banc de sable</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="kicker">🗓️ Jour 8</div>
+    <div class="title">Blue lagoon / snorkeling (option) + coucher de soleil</div>
+    <div class="p">Excursion lagon (selon opérateurs) ou journée plage + sunset.</div>
+    <div class="photos">
+      <div class="photo"><img src="images/j08_1.jpg" alt="J8 photo 1"><div class="cap">Photo 1 (à remplacer) — Blue lagoon</div></div>
+      <div class="photo"><img src="images/j08_2.jpg" alt="J8 photo 2"><div class="cap">Photo 2 (à remplacer) — Sunset</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="kicker">🗓️ Jour 9</div>
+    <div class="title">Jozani Forest + Spice Tour (combo)</div>
+    <div class="p">Singes colobus rouges + mangroves. Puis visite épices (rapide, ludique).</div>
+    <div class="row">
+      <span class="pill"><strong>📍</strong> Jozani</span>
+      <span class="pill"><a href="https://waze.com/ul?ll=-6.2556%2C39.4123&navigate=yes" target="_blank" rel="noopener">🧭 Waze</a></span>
+      <span class="pill"><a href="https://www.google.com/search?q=Jozani+Forest+Zanzibar+Tanzania" target="_blank" rel="noopener">🔎 Google</a></span>
+    </div>
+    <div class="photos">
+      <div class="photo"><img src="images/j09_1.jpg" alt="J9 photo 1"><div class="cap">Photo 1 (à remplacer) — Colobus</div></div>
+      <div class="photo"><img src="images/j09_2.jpg" alt="J9 photo 2"><div class="cap">Photo 2 (à remplacer) — Épices</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="kicker">🗓️ Jour 10</div>
+    <div class="title">Dernier jour + retour (flex)</div>
+    <div class="p">Selon horaires : plage, souvenirs, dernière baignade, puis transfert vers ZNZ.</div>
+    <div class="row">
+      <span class="pill"><strong>✈️</strong> Aéroport ZNZ</span>
+      <span class="pill"><a href="https://waze.com/ul?ll=-6.2220%2C39.2249&navigate=yes" target="_blank" rel="noopener">🧭 Waze</a></span>
+      <span class="pill"><a href="https://www.google.com/search?q=Zanzibar+Airport+ZNZ" target="_blank" rel="noopener">🔎 Google</a></span>
+    </div>
+    <div class="photos">
+      <div class="photo"><img src="images/j10_1.jpg" alt="J10 photo 1"><div class="cap">Photo 1 (à remplacer) — Dernière plage</div></div>
+      <div class="photo"><img src="images/j10_2.jpg" alt="J10 photo 2"><div class="cap">Photo 2 (à remplacer) — Souvenirs</div></div>
+    </div>
+  </div>
+
+  <!-- BEST OF -->
+  <div class="card" id="bestof">
+    <div class="kicker">🟢 Best Of</div>
+    <div class="title">Les incontournables</div>
+    <div class="p">À cocher en famille : chacun choisit 2 “must do”.</div>
+
+    <div class="split">
+      <div class="box">
+        <div class="row2"><div class="name">🏛 Stone Town (culture)</div><div class="time">1/2 journée</div></div>
+        <div class="desc">Ruelles, marchés, ambiance. Top au coucher de soleil en rooftop.</div>
+      </div>
+      <div class="box">
+        <div class="row2"><div class="name">🐢 Prison Island</div><div class="time">2–4h</div></div>
+        <div class="desc">Tortues géantes + excursion facile.</div>
+      </div>
+      <div class="box">
+        <div class="row2"><div class="name">🐠 Snorkeling Mnemba</div><div class="time">Demi-journée</div></div>
+        <div class="desc">Eau claire, poissons, sortie bateau.</div>
+      </div>
+      <div class="box">
+        <div class="row2"><div class="name">🌅 Kendwa sunset</div><div class="time">Soir</div></div>
+        <div class="desc">Un des meilleurs sunsets (photos dingues).</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ANNEXES -->
+  <div class="card" id="annexe">
+    <div class="kicker">🟡 Annexes</div>
+    <div class="title">Options si on a du temps / selon météo</div>
+    <div class="p">À garder sous le coude pour les journées “flex”.</div>
+
+    <div class="split">
+      <div class="box">
+        <div class="row2"><div class="name">🌿 Mangroves (Jozani)</div><div class="time">1–2h</div></div>
+        <div class="desc">Promenade sur passerelles, super photos.</div>
+      </div>
+      <div class="box">
+        <div class="row2"><div class="name">🌶 Spice Tour</div><div class="time">1–2h</div></div>
+        <div class="desc">Ludique et rapide, parfait en famille.</div>
+      </div>
+      <div class="box">
+        <div class="row2"><div class="name">🏖 Jambiani walk</div><div class="time">Fin d’aprem</div></div>
+        <div class="desc">Promenade bord de mer, ambiance plus locale.</div>
+      </div>
+      <div class="box">
+        <div class="row2"><div class="name">🪁 Paje (kitesurf)</div><div class="time">Selon vent</div></div>
+        <div class="desc">Regarder / tester, grosse ambiance.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SOIRÉE -->
+  <div class="card" id="soiree">
+    <div class="kicker">🟣 Soirées</div>
+    <div class="title">Idées “soir” (sans se compliquer)</div>
+    <div class="p">
+      Kendwa sunset • Dîner fruits de mer • Rooftop Stone Town • Balade marché de nuit (si dispo).
+    </div>
+  </div>
+
+  <div class="footer">
+    Zanzibar 2026 • Version template “Ibiza 2026” adaptée • © Olivier
+  </div>
+
+</div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+
+    // Map init (Zanzibar)
+    const map = L.map('map', { zoomControl: true });
+
+    // Bounds around Zanzibar island (approx)
+    const zanzibarBounds = L.latLngBounds(
+      [-6.55, 39.05],
+      [-5.65, 39.75]
+    );
+    map.fitBounds(zanzibarBounds, { padding: [18, 18] });
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      maxZoom: 18,
+      attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+    }).addTo(map);
+
+    setTimeout(() => map.invalidateSize(), 120);
+
+    // Helper: open google search with "Zanzibar Tanzania"
+    function googleSearchUrl(name){
+      const q = encodeURIComponent(name + " Zanzibar Tanzania");
+      return "https://www.google.com/search?q=" + q;
+    }
+
+    // Helper: Waze
+    function wazeUrl(lat, lng){
+      return `https://waze.com/ul?ll=${lat}%2C${lng}&navigate=yes`;
+    }
+
+    // Marker icon by category with number
+    function markerIcon(cat, n){
+      const cls =
+        cat === "ARRIVEE" ? "m-red" :
+        cat === "JOUR"    ? "m-blue" :
+        cat === "BESTOF"  ? "m-green" :
+        cat === "ANNEXE"  ? "m-yellow" :
+        cat === "SOIREE"  ? "m-purple" : "m-blue";
+
+      return L.divIcon({
+        className: "",
+        html: `<div class="dot-marker ${cls}">${n}</div>`,
+        iconSize: [22,22],
+        iconAnchor: [11,11]
+      });
+    }
+
+    // Spots (tu peux en ajouter autant que tu veux)
+    const spots = [
+      { name:"Aéroport Zanzibar (ZNZ)",   lat:-6.2220, lng:39.2249, cat:"ARRIVEE" },
+
+      { name:"Stone Town",               lat:-6.1659, lng:39.2026, cat:"JOUR" },
+      { name:"Prison Island (Changuu)",  lat:-6.1328, lng:39.1765, cat:"BESTOF" },
+
+      { name:"Kendwa Beach",             lat:-5.7580, lng:39.2880, cat:"BESTOF" },
+      { name:"Nungwi Beach",             lat:-5.7269, lng:39.2987, cat:"JOUR" },
+
+      { name:"Mnemba (zone snorkeling)", lat:-5.8188, lng:39.3545, cat:"BESTOF" },
+
+      { name:"Paje",                     lat:-6.2666, lng:39.5342, cat:"JOUR" },
+      { name:"Jambiani",                 lat:-6.3096, lng:39.5447, cat:"ANNEXE" },
+
+      { name:"Jozani Forest",            lat:-6.2556, lng:39.4123, cat:"BESTOF" },
+
+      { name:"Soirée Kendwa Sunset",     lat:-5.7580, lng:39.2880, cat:"SOIREE" },
+      { name:"Rooftop Stone Town",       lat:-6.1659, lng:39.2026, cat:"SOIREE" }
+    ];
+
+    spots.forEach((s, idx) => {
+      const n = idx + 1;
+
+      const popupHtml = `
+        <div style="font-family:system-ui; line-height:1.35">
+          <div style="font-weight:900; margin-bottom:6px">${n}. ${s.name}</div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap">
+            <a href="${googleSearchUrl(s.name)}" target="_blank" rel="noopener"
+               style="text-decoration:none; padding:6px 10px; border-radius:999px; border:1px solid rgba(0,0,0,.15); background:#ffffff; color:#0b1532; font-weight:700;">
+              🔎 Google
+            </a>
+            <a href="${wazeUrl(s.lat, s.lng)}" target="_blank" rel="noopener"
+               style="text-decoration:none; padding:6px 10px; border-radius:999px; border:1px solid rgba(0,0,0,.15); background:#ffffff; color:#0b1532; font-weight:700;">
+              🧭 Waze
+            </a>
+          </div>
+          <div style="margin-top:8px; font-size:12px; opacity:.75">
+            Coordonnées : ${s.lat.toFixed(4)}, ${s.lng.toFixed(4)}
+          </div>
+        </div>
+      `;
+
+      L.marker([s.lat, s.lng], { icon: markerIcon(s.cat, n) })
+        .addTo(map)
+        .bindPopup(popupHtml);
+    });
+
+  });
+</script>
+
+</body>
+</html>
